@@ -1,0 +1,15 @@
+[Unit]
+Description=Collects nginx logs from rsyslog and saves them into clickhouse dbms
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=log-collector
+Group=log-collector
+Type=simple
+PermissionsStartOnly=true
+ExecStart=/usr/bin/nginx-log-collector -config /etc/nginx-log-collector/config.yaml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

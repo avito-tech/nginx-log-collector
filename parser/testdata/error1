@@ -1,0 +1,1 @@
+2018/04/11 21:57:59 [error] 702#702: *693176 connect() failed (111: Connection refused) while connecting to upstream, client: 10.8.232.43, server: grafana, request: "GET /grafana/api/org HTTP/1.1", upstream: "http://127.0.0.1:3000/api/org", host: "g.avito.ru"

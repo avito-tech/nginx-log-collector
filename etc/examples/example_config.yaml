@@ -1,0 +1,45 @@
+processor:
+  workers: 8
+
+receiver:
+  addr: 0.0.0.0:4444
+
+logging:
+  level: debug
+
+statsd:
+  #  prefix: resources.monitoring.nginx_log_collector
+  prefix: complex.delete_me.nginx_log_collector
+  addr: localhost:2003
+  enabled: false
+
+pprof:
+  enabled: true
+  addr: 0.0.0.0:6060
+
+backlog:
+  dir: /tmp/backlog
+
+
+collected_logs:
+- tag: "nginx:"
+  format: access  # access | error
+  buffer_size: 8388608
+  transformers:  # possible functions: ipToUint32 | limitMaxLength(int)
+    ip: ipToUint32
+    remote_addr: ipToUint32
+    request_uri: limitMaxLength(100)
+    upstream_response_time: toArray
+  upload:
+    table: nginx.access_log
+    dsn: http://localhost:8123/
+
+- tag: "nginx_error:"
+  format: error  # access | error
+  buffer_size: 8388608
+#  transformers:  # possible functions: ipToUint32 | limitMaxLength(int)
+#    ip: ipToUint32
+#    request_uri: limitMaxLength(100)
+  upload:
+    table: nginx.error_log
+    dsn: http://localhost:8123/

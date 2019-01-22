@@ -1,0 +1,39 @@
+processor:
+  workers: 8
+
+receiver:
+  addr: 0.0.0.0:4444
+
+logging:
+  level: info
+  path: /var/log/nginx-log-collector/main.log
+
+statsd:
+  prefix: resources.monitoring.nginx_log_collector
+  addr: statsd:8126
+  enabled: true
+
+pprof:
+  enabled: true
+  addr: 0.0.0.0:6060
+
+backlog:
+  dir: /var/lib/nginx-log-collector/backlog/
+
+collected_logs:
+- tag: "nginx:"
+  format: access  # access | error
+  buffer_size: 104857600
+  transformers:  # possible functions: ipToUint32 | limitMaxLength(int)
+    http_x_real_ip: ipToUint32
+    upstream_response_time: toArray
+  upload:
+    table: nginx.access_log
+    dsn: http://localhost:8123/
+
+- tag: "nginx_error:"
+  format: error  # access | error
+  buffer_size: 1048576
+  upload:
+    table: nginx.error_log
+    dsn: http://localhost:8123/

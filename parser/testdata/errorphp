@@ -1,0 +1,9 @@
+2018/09/20 13:37:39 [error] 55836#0: *6417865223 FastCGI sent in stderr: "PHP message: PHP Fatal error:  Uncaught Exception\Warning: Imagick::__construct(): HTTP request failed! HTTP/1.1 404 Not Found
+in /home/www-data/tags/rc-201809201033/release3/lib/Controller/Common/X.php:17
+Stack trace:
+#0 /home/www-data/tags/rc-201809201033/release3/lib/bootstrap.php(214): Bootstrap::errorHandler(2, 'Imagick::__cons...', '/home/www-data/...', 17, Array)
+#1 /home/www-data/tags/rc-201809201033/release3/lib/Utils/ShutdownHandler.php(16): Bootstrap::shutdownHandler()
+#2 [internal function]: Utils\ShutdownHandler->Utils\{closure}()
+#3 {main}"
+
+thrown in /home/www-data/tags/rc-201809201033/release3/lib/Controller/Common/X.php on line 17" while reading upstream, client: 10.9.1.205, server: www.avito.ru, request: "GET /img/share/auto/1 HTTP/1.0", upstream: "fastcgi://127.0.0.1:9000", host: "www.avito.ru"
