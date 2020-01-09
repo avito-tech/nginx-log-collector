@@ -10,7 +10,7 @@ logging:
 
 statsd:
   prefix: resources.monitoring.nginx_log_collector
-  addr: statsd:8126
+  addr: aggregator01.msk.avito.ru:8126
   enabled: true
 
 pprof:
@@ -21,19 +21,29 @@ backlog:
   dir: /var/lib/nginx-log-collector/backlog/
 
 collected_logs:
-- tag: "nginx:"
-  format: access  # access | error
-  buffer_size: 104857600
-  transformers:  # possible functions: ipToUint32 | limitMaxLength(int)
-    http_x_real_ip: ipToUint32
-    upstream_response_time: toArray
-  upload:
-    table: nginx.access_log
-    dsn: http://localhost:8123/
+  - tag: "nginx:"
+    format: access  # access | error
+    buffer_size: 104857600
+    transformers:  # possible functions: ipToUint32 | limitMaxLength(int) | toArray | splitAndStore
+      http_x_real_ip:
+        ipToUint32:
+      upstream_response_time:
+        toArray:
+      http_referer:
+        limitMaxLength: 800
+      request_uri:
+        splitAndStore:
+          delimiter: "?"
+          store_to:
+            request_uri: 0
+            request_args: 1
+    upload:
+      table: nginx.access_log
+      dsn: http://localhost:8123/
 
-- tag: "nginx_error:"
-  format: error  # access | error
-  buffer_size: 1048576
-  upload:
-    table: nginx.error_log
-    dsn: http://localhost:8123/
+  - tag: "nginx_error:"
+    format: error  # access | error
+    buffer_size: 1048576
+    upload:
+      table: nginx.error_log
+      dsn: http://localhost:8123/

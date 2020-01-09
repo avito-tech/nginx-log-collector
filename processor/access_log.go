@@ -6,14 +6,15 @@ import (
 	"github.com/buger/jsonparser"
 	"github.com/pkg/errors"
 	"github.com/valyala/fastjson"
+	"nginx-log-collector/processor/functions"
 )
 
 type AccessLogConverter struct {
-	transformers []Transformer
+	transformers []transformer
 }
 
-func NewAccessLogConverter(transformerMap map[string]string) (*AccessLogConverter, error) {
-	transformers, err := NewTransformers(transformerMap)
+func NewAccessLogConverter(transformerMap functions.FunctionSignatureMap) (*AccessLogConverter, error) {
+	transformers, err := parseTransformersMap(transformerMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create access_log converter")
 	}
@@ -50,14 +51,24 @@ func (a *AccessLogConverter) Convert(msg []byte, _ string) ([]byte, error) {
 
 func (a *AccessLogConverter) transform(msg []byte) ([]byte, error) {
 	for _, tr := range a.transformers {
-		val, err := jsonparser.GetUnsafeString(msg, tr.FieldName)
+		val, err := jsonparser.GetUnsafeString(msg, tr.fieldNameSrc)
 		if err != nil {
 			continue
 		}
 
-		msg, err = jsonparser.Set(msg, tr.Fn(val), tr.FieldName)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to set field")
+		callResult := tr.function.Call(val)
+		for _, chunk := range callResult {
+			var fieldName string
+			if chunk.DstFieldName != nil {
+				fieldName = *chunk.DstFieldName
+			} else {
+				fieldName = tr.fieldNameSrc
+			}
+
+			msg, err = jsonparser.Set(msg, chunk.Value, fieldName)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to set field")
+			}
 		}
 	}
 	return msg, nil

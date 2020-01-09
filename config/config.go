@@ -1,5 +1,9 @@
 package config
 
+import (
+	"nginx-log-collector/processor/functions"
+)
+
 type Logging struct {
 	Level string `yaml:"level"`
 	Path  string `yaml:"path"`
@@ -20,8 +24,8 @@ type CollectedLog struct {
 	Format     string `yaml:"format"`
 	BufferSize int    `yaml:"buffer_size"`
 
-	Transformers map[string]string `yaml:"transformers"`
-	Upload       Upload            `yaml:"upload"`
+	Transformers functions.FunctionSignatureMap `yaml:"transformers"`
+	Upload       Upload                         `yaml:"upload"`
 }
 
 type Processor struct {

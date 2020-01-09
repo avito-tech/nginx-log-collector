@@ -6,14 +6,15 @@ import (
 
 	"github.com/pkg/errors"
 	"nginx-log-collector/parser"
+	"nginx-log-collector/processor/functions"
 )
 
 type ErrorLogConverter struct {
-	transformers []Transformer
+	transformers []transformer
 }
 
-func NewErrorLogConverter(transformerMap map[string]string) (*ErrorLogConverter, error) {
-	transformers, err := NewTransformers(transformerMap)
+func NewErrorLogConverter(transformerMap functions.FunctionSignatureMap) (*ErrorLogConverter, error) {
+	transformers, err := parseTransformersMap(transformerMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create error_log converter")
 	}
@@ -39,7 +40,7 @@ func (e *ErrorLogConverter) Convert(msg []byte, hostname string) ([]byte, error)
 
 func (e *ErrorLogConverter) transform(v map[string]interface{}) {
 	for _, tr := range e.transformers {
-		value, found := v[tr.FieldName]
+		value, found := v[tr.fieldNameSrc]
 		if !found {
 			continue
 		}
@@ -47,6 +48,17 @@ func (e *ErrorLogConverter) transform(v map[string]interface{}) {
 		if !ok {
 			continue
 		}
-		v[tr.FieldName] = tr.Fn(strValue)
+
+		callResult := tr.function.Call(strValue)
+		for _, chunk := range callResult {
+			var fieldName string
+			if chunk.DstFieldName != nil {
+				fieldName = *chunk.DstFieldName
+			} else {
+				fieldName = tr.fieldNameSrc
+			}
+
+			v[fieldName] = chunk.Value
+		}
 	}
 }
