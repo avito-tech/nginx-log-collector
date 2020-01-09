@@ -1,27 +1,28 @@
 package processor
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"nginx-log-collector/processor/functions"
+)
 
-type TransformFunc func(string) []byte
-
-type Transformer struct {
-	FieldName string
-	Fn        TransformFunc
+type transformer struct {
+	fieldNameSrc string
+	function     functions.Callable
 }
 
-func NewTransformers(transformerMap map[string]string) ([]Transformer, error) {
-	transformers := make([]Transformer, 0)
-	for fieldName, funcName := range transformerMap {
-		fn, err := strToFn(funcName)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to convert %s to function", funcName)
+func parseTransformersMap(transformersMap functions.FunctionSignatureMap) ([]transformer, error) {
+	transformers := make([]transformer, 0, len(transformersMap))
 
+	for fieldNameSrc, functionSignature := range transformersMap {
+		if callable, err := functions.Dispatch(functionSignature); err != nil {
+			return nil, errors.Wrapf(err, "unable to convert expression for field %s to function", fieldNameSrc)
+		} else {
+			transformers = append(transformers, transformer{
+				fieldNameSrc: fieldNameSrc,
+				function:     callable,
+			})
 		}
-		transformers = append(transformers, Transformer{
-			FieldName: fieldName,
-			Fn:        fn,
-		})
 	}
-	return transformers, nil
 
+	return transformers, nil
 }
