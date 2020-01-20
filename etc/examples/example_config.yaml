@@ -25,6 +25,8 @@ collected_logs:
   format: access  # access | error
   buffer_size: 104857600
   transformers:  # possible functions: ipToUint32 | limitMaxLength(int) | toArray | splitAndStore
+    remote_addr:
+      ipToUint32:
     http_x_real_ip:
       ipToUint32:
     upstream_response_time:
