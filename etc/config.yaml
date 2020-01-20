@@ -10,7 +10,7 @@ logging:
 
 statsd:
   prefix: resources.monitoring.nginx_log_collector
-  addr: aggregator01.msk.avito.ru:8126
+  addr: statsd-aggregator:8125
   enabled: true
 
 pprof:
