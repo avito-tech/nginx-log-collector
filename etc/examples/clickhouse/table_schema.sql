@@ -26,7 +26,7 @@ CREATE TABLE nginx.access_log_shard
     host LowCardinality(String),
     upstream_addr LowCardinality(String)
 )
-ENGINE = MergeTree(event_date, (hostname, request_uri, event_date), 8192)
+ENGINE = MergeTree(event_date, (hostname, request_uri, event_date), 8192);
 
 
 CREATE TABLE nginx.access_log
@@ -53,7 +53,7 @@ CREATE TABLE nginx.access_log
     host LowCardinality(String),
     upstream_addr LowCardinality(String)
 )
-ENGINE = Distributed('logs_cluster', 'nginx', 'access_log_shard', rand())
+ENGINE = Distributed('logs_cluster', 'nginx', 'access_log_shard', rand());
 
 
 CREATE TABLE nginx.error_log
@@ -74,4 +74,4 @@ CREATE TABLE nginx.error_log
     subrequest String,
     hostname LowCardinality(String)
 )
-ENGINE = ReplicatedMergeTree('/clickhouse/tables/logs_replicator/nginx.error2_log', '{replica}', event_date, (server_name, request, event_date), 8192)
+ENGINE = ReplicatedMergeTree('/clickhouse/tables/logs_replicator/nginx.error2_log', '{replica}', event_date, (server_name, request, event_date), 8192);
