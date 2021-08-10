@@ -47,3 +47,12 @@ collected_logs:
     upload:
       table: nginx.error_log
       dsn: http://localhost:8123/
+
+
+- tag: "iac_logs:"
+  format: access
+  buffer_size: 4048576
+  audit: true # Advanced traffic analysis data log
+  upload:
+    table: services.iac_logs
+    dsn: http://user:passwd@localhost:8123/
