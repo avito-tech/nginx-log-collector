@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	readTimeout        = 30 * time.Second
+	tcpReadTimeout     = 30 * time.Second
 	queueCheckInterval = 30 * time.Second
 )
 
@@ -88,13 +88,12 @@ func (t *TCPReceiver) handle(conn net.Conn, done <-chan struct{}) {
 			return
 		default:
 		}
-		err := conn.SetReadDeadline(time.Now().Add(readTimeout))
+		err := conn.SetReadDeadline(time.Now().Add(tcpReadTimeout))
 		if err != nil {
 			t.logger.Warn().Err(err).Msg("set deadline error")
 		}
 
 		line, err := reader.ReadBytes('\n')
-
 		if err != nil {
 			if err == io.EOF {
 				if len(line) > 0 {
@@ -120,19 +119,20 @@ func (t *TCPReceiver) handle(conn net.Conn, done <-chan struct{}) {
 
 func (t *TCPReceiver) queueMonitoring(done <-chan struct{}) {
 	defer t.wg.Done()
+
 	ticker := time.NewTicker(queueCheckInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			t.logger.Debug().Int("msg_chan_len", len(t.msgChan)).Msg("queue stats")
-			t.metrics.Count("msg_chan_len", len(t.msgChan))
+			t.logger.Debug().Int("tcp_msg_chan_len", len(t.msgChan)).Msg("tcp queue stats")
+			t.metrics.Count("tcp_msg_chan_len", len(t.msgChan))
 		case <-done:
+			t.logger.Debug().Msg("queueMonitoring exit")
 			return
 		}
 	}
-	t.logger.Debug().Msg("queueMonitoring exit")
 }
 
 func (t *TCPReceiver) Stop() {

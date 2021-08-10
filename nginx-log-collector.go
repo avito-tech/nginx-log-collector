@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -10,13 +11,15 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/alexcesaro/statsd.v2"
-	"gopkg.in/yaml.v2"
 	"nginx-log-collector/config"
 	"nginx-log-collector/service"
+	"gopkg.in/alexcesaro/statsd.v2"
+	"gopkg.in/natefinch/lumberjack.v2"
+	"gopkg.in/yaml.v2"
 )
 
 // should be filled by go build
@@ -45,11 +48,15 @@ func setupLogger(cfg config.Logging) (*zerolog.Logger, error) {
 	var z zerolog.Logger
 
 	if cfg.Path != "" && cfg.Path != "stdout" {
-		f, err := os.OpenFile(cfg.Path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		_, err := os.OpenFile(cfg.Path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 		if err != nil {
 			return nil, err
 		}
-		z = zerolog.New(zerolog.SyncWriter(f))
+		z = zerolog.New(&lumberjack.Logger{
+			Filename: cfg.Path,
+			MaxSize:  200, // megabytes
+			MaxAge:   180, // days
+		})
 	} else {
 		z = zerolog.New(os.Stdout)
 	}
@@ -71,6 +78,7 @@ func setupStatsD(cfg config.Statsd) (*statsd.Client, error) {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 
 	configFile := flag.String("config", "", "Config path")
 	flag.Parse()
