@@ -1,7 +1,11 @@
 processor:
   workers: 8
 
-receiver:
+httpReceiver:
+  enabled: true
+  url: 0.0.0.0:4446
+
+tcpReceiver:
   addr: 0.0.0.0:4444
 
 logging:
@@ -20,30 +24,27 @@ pprof:
 backlog:
   dir: /tmp/backlog
 
+
 collected_logs:
 - tag: "nginx:"
   format: access  # access | error
-  buffer_size: 104857600
-  transformers:  # possible functions: ipToUint32 | limitMaxLength(int) | toArray | splitAndStore
-    http_x_real_ip:
-      ipToUint32:
-    upstream_response_time:
-      toArray:
-    http_referer:
-      limitMaxLength: 800
-    request_uri:
-      splitAndStore:
-        delimiter: "?"
-        store_to:
-          request_uri: 0
-          request_args: 1
+  allow_error_ratio: 10
+  buffer_size: 8388608
+  transformers:  # possible functions: ipToUint32 | limitMaxLength(int)
+    ip: ipToUint32
+    remote_addr: ipToUint32
+    request_uri: limitMaxLength(100)
+    upstream_response_time: toArray
   upload:
     table: nginx.access_log
     dsn: http://localhost:8123/
 
 - tag: "nginx_error:"
   format: error  # access | error
-  buffer_size: 1048576
+  buffer_size: 8388608
+#  transformers:  # possible functions: ipToUint32 | limitMaxLength(int)
+#    ip: ipToUint32
+#    request_uri: limitMaxLength(100)
   upload:
     table: nginx.error_log
     dsn: http://localhost:8123/

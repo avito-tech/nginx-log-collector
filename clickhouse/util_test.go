@@ -17,7 +17,7 @@ func TestMakeUrl(t *testing.T) {
 	}
 
 	for _, p := range table {
-		url, err := MakeUrl(p.inputDSN, p.inputTable)
+		url, err := MakeUrl(p.inputDSN, p.inputTable, true, 0)
 		assert.Nil(t, err)
 		assert.Equal(t, p.expected, url)
 	}

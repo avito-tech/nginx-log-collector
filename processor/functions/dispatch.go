@@ -31,6 +31,8 @@ func Dispatch(signature FunctionSignature) (Callable, error) {
 		callable, err = validateSplitAndStore(functionExtra)
 	} else if functionName == "toArray" {
 		callable, err = validateToArray(functionExtra)
+	} else if functionName == "calculateSHA1" {
+		callable, err = validateCalculateSHA1(functionExtra)
 	} else {
 		err = fmt.Errorf("unknown function name: %s", functionName)
 	}
@@ -101,5 +103,17 @@ func validateToArray(data interface{}) (*toArray, error) {
 		return nil, fmt.Errorf("ipToUint32 %s", err.Error())
 	} else {
 		return &toArray{}, nil
+	}
+}
+
+func validateCalculateSHA1(data interface{}) (*calculateSHA1, error) {
+	var result calculateSHA1
+
+	if out, err := yaml.Marshal(data); err != nil {
+		return nil, err
+	} else if err := yaml.Unmarshal(out, &result); err != nil {
+		return nil, err
+	} else {
+		return &result, nil
 	}
 }

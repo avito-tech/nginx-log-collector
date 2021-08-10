@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"gopkg.in/alexcesaro/statsd.v2"
+
 	"nginx-log-collector/backlog"
 	"nginx-log-collector/config"
 	"nginx-log-collector/processor"
@@ -12,20 +13,25 @@ import (
 )
 
 type Service struct {
-	receiver  *receiver.TCPReceiver
-	processor *processor.Processor
-	uploader  *uploader.Uploader
-	backlog   *backlog.Backlog
+	httpReceiver *receiver.HttpReceiver
+	tcpReceiver  *receiver.TCPReceiver
+	processor    *processor.Processor
+	uploader     *uploader.Uploader
+	backlog      *backlog.Backlog
 
 	logger  zerolog.Logger
 	metrics *statsd.Client
 }
 
 func New(cfg *config.Config, metrics *statsd.Client, logger *zerolog.Logger) (*Service, error) {
-
-	recv, err := receiver.NewTCPReceiver(cfg.Receiver.Addr, metrics, logger)
+	httpReceiver, err := receiver.NewHttpReceiver(&cfg.HttpReceiver, metrics, logger)
 	if err != nil {
-		return nil, errors.Wrap(err, "receiver init error")
+		return nil, errors.Wrap(err, "http receiver init error")
+	}
+
+	tcpReceiver, err := receiver.NewTCPReceiver(cfg.TCPReceiver.Addr, metrics, logger)
+	if err != nil {
+		return nil, errors.Wrap(err, "tcp receiver init error")
 	}
 
 	proc, err := processor.New(cfg.Processor, cfg.CollectedLogs, metrics, logger)
@@ -44,37 +50,47 @@ func New(cfg *config.Config, metrics *statsd.Client, logger *zerolog.Logger) (*S
 	}
 
 	return &Service{
-		receiver:  recv,
-		backlog:   bl,
-		processor: proc,
-		uploader:  upl,
-		metrics:   metrics.Clone(statsd.Prefix("service")),
-		logger:    logger.With().Str("component", "service").Logger(),
+		httpReceiver: httpReceiver,
+		tcpReceiver:  tcpReceiver,
+		processor:    proc,
+		uploader:     upl,
+		backlog:      bl,
+		logger:       logger.With().Str("component", "service").Logger(),
+		metrics:      metrics.Clone(statsd.Prefix("service")),
 	}, nil
 }
 
 func (s *Service) Start(done <-chan struct{}) {
 	s.logger.Info().Msg("starting")
-	msgChan := s.receiver.MsgChan()
-	resultChan := s.processor.ResultChan()
 
 	sDone := make(chan struct{})
-
-	go s.receiver.Start(sDone)
-	go s.processor.Start(msgChan, sDone)
-	go s.uploader.Start(resultChan, sDone)
+	if s.httpReceiver != nil {
+		go s.httpReceiver.Start(sDone)
+	}
+	go s.tcpReceiver.Start(sDone)
+	go s.processor.Start(sDone, s.httpReceiver.MsgChan(), s.tcpReceiver.MsgChan())
+	go s.uploader.Start(sDone, s.processor.ResultChan())
 	go s.backlog.Start(done)
 
 	<-done
 	close(sDone)
 
 	s.logger.Info().Msg("stopping service")
-	s.receiver.Stop()
-	s.logger.Info().Msg("receiver stopped")
+
+	if s.httpReceiver != nil {
+		s.httpReceiver.Stop()
+		s.logger.Info().Msg("http receiver stopped")
+	}
+
+	s.tcpReceiver.Stop()
+	s.logger.Info().Msg("tcp receiver stopped")
+
 	s.processor.Stop()
 	s.logger.Info().Msg("processor stopped")
+
 	s.uploader.Stop()
 	s.logger.Info().Msg("uploader stopped")
+
 	s.backlog.Stop()
 	s.logger.Info().Msg("backlog stopped")
 }

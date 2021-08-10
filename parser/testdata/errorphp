@@ -6,4 +6,4 @@ Stack trace:
 #2 [internal function]: Utils\ShutdownHandler->Utils\{closure}()
 #3 {main}"
 
-thrown in /home/www-data/tags/rc-201809201033/release3/lib/Controller/Common/X.php on line 17" while reading upstream, client: 10.9.1.205, server: www.avito.ru, request: "GET /img/share/auto/1 HTTP/1.0", upstream: "fastcgi://127.0.0.1:9000", host: "www.avito.ru"
+thrown in /home/www-data/tags/rc-201809201033/release3/lib/Controller/Common/X.php on line 17" while reading upstream, client: 10.0.0.205, server: www.test.ru, request: "GET /img/share/auto/1 HTTP/1.0", upstream: "fastcgi://127.0.0.1:9000", host: "www.test.ru"

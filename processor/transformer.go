@@ -1,8 +1,9 @@
 package processor
 
 import (
-	"github.com/pkg/errors"
 	"nginx-log-collector/processor/functions"
+
+	"github.com/pkg/errors"
 )
 
 type transformer struct {

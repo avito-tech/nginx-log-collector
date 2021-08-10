@@ -12,6 +12,7 @@ type tagProcessor struct {
 	nextFlushAt time.Time
 	tag         string
 	bufSize     int
+	linesInBuf  int
 }
 
 func newTagProcessor(bufferSize int, tag string) *tagProcessor {
@@ -22,6 +23,7 @@ func newTagProcessor(bufferSize int, tag string) *tagProcessor {
 		tag:         tag,
 		mu:          &sync.Mutex{},
 		bufSize:     bufferSize,
+		linesInBuf:  0,
 	}
 }
 
@@ -35,19 +37,22 @@ func (t *tagProcessor) flush(resultChan chan Result) {
 	clone := make([]byte, len(b)) // TODO sync pool?
 	copy(clone, b)
 	resultChan <- Result{
-		Tag:  t.tag,
-		Data: clone,
+		Tag:   t.tag,
+		Data:  clone,
+		Lines: t.linesInBuf,
 	}
 	t.buffer.Reset()
+	t.linesInBuf = 0
 }
 
-func (t *tagProcessor) write(data []byte, resultChan chan Result) {
+func (t *tagProcessor) writeLine(data []byte, resultChan chan Result) {
 	t.mu.Lock()
 
 	if t.buffer.Len()+len(data) > t.bufSize {
 		t.flush(resultChan)
 	}
 	t.buffer.Write(data)
+	t.linesInBuf += 1
 
 	t.mu.Unlock()
 }

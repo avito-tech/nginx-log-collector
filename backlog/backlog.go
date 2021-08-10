@@ -12,12 +12,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"nginx-log-collector/clickhouse"
 	"nginx-log-collector/config"
 	"nginx-log-collector/utils"
-
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
 	"gopkg.in/alexcesaro/statsd.v2"
 )
 
@@ -109,13 +108,13 @@ func (b *Backlog) processFile(filename string) {
 	path := filepath.Join(b.dir, filename)
 	file, err := os.Open(path)
 	if err != nil {
-		b.logger.Warn().Err(err).Msg("unable to open backlog file")
+		b.logger.Error().Err(err).Msg("unable to open backlog file")
 		b.metrics.Increment("open_error")
 		return
 	}
 	if !checkCrc(file) {
 		file.Close()
-		b.logger.Warn().Msg("invalid crc32 checksum")
+		b.logger.Error().Msg("invalid crc32 checksum")
 		if err = os.Remove(path); err != nil {
 			b.logger.Fatal().Err(err).Msg("unable to remove invalid backlog file")
 			b.metrics.Increment("remove_error")
@@ -131,7 +130,7 @@ func (b *Backlog) processFile(filename string) {
 	file.Close()
 
 	if err != nil {
-		b.logger.Warn().Err(err).Msg("unable to upload backlog file")
+		b.logger.Error().Err(err).Msg("unable to upload backlog file")
 		b.metrics.Increment("upload_error")
 	} else {
 		if err = os.Remove(path); err != nil {

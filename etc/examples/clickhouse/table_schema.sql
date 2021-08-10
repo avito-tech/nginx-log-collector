@@ -9,12 +9,10 @@ CREATE TABLE nginx.access_log_shard
     server_name LowCardinality(String),
     remote_user String,
     http_x_real_ip UInt32,
-    remote_addr UInt32,
     status UInt16,
     scheme LowCardinality(String),
     request_method LowCardinality(String),
     request_uri String,
-    request_args String,
     server_protocol LowCardinality(String),
     body_bytes_sent UInt64,
     request_bytes UInt64,
@@ -23,8 +21,7 @@ CREATE TABLE nginx.access_log_shard
     request_time Float32,
     upstream_response_time Array(Float32),
     hostname LowCardinality(String),
-    host LowCardinality(String),
-    upstream_addr LowCardinality(String)
+    host LowCardinality(String)
 )
 ENGINE = MergeTree(event_date, (hostname, request_uri, event_date), 8192)
 
@@ -36,12 +33,10 @@ CREATE TABLE nginx.access_log
     server_name LowCardinality(String),
     remote_user String,
     http_x_real_ip UInt32,
-    remote_addr UInt32,
     status UInt16,
     scheme LowCardinality(String),
     request_method LowCardinality(String),
     request_uri String,
-    request_args String,
     server_protocol LowCardinality(String),
     body_bytes_sent UInt64,
     request_bytes UInt64,
@@ -50,8 +45,7 @@ CREATE TABLE nginx.access_log
     request_time Float32,
     upstream_response_time Array(Float32),
     hostname LowCardinality(String),
-    host LowCardinality(String),
-    upstream_addr LowCardinality(String)
+    host LowCardinality(String)
 )
 ENGINE = Distributed('logs_cluster', 'nginx', 'access_log_shard', rand())
 
@@ -74,4 +68,4 @@ CREATE TABLE nginx.error_log
     subrequest String,
     hostname LowCardinality(String)
 )
-ENGINE = ReplicatedMergeTree('/clickhouse/tables/logs_replicator/nginx.error2_log', '{replica}', event_date, (server_name, request, event_date), 8192)
+ENGINE = ReplicatedMergeTree('/clickhouse/tables/logs_replicator/nginx.error2_log', _SET_ME_, event_date, (server_name, request, event_date), 8192)
