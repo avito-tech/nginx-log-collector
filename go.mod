@@ -3,7 +3,7 @@ module nginx-log-collector
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/blakesmith/ar v0.0.0-20150311145944-8bd4349a67f2 // indirect
-	github.com/buger/jsonparser v0.0.0-20180910192245-6acdf747ae99
+	github.com/buger/jsonparser v1.1.1
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/goreleaser/nfpm v0.9.5
 	github.com/imdario/mergo v0.3.6 // indirect
